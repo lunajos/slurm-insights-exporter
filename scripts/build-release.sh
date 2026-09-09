@@ -22,6 +22,14 @@ install -m0644 "${project_root}/README.md" "${project_root}/LICENSE" "${work_dir
 install -m0644 "${project_root}/deploy/systemd/slurm-insights-exporter.service" "${project_root}/deploy/systemd/slurm-insights-exporter.sysconfig" "${work_dir}/${archive}/"
 tar -C "${work_dir}" -czf "${dist_dir}/${archive}.tar.gz" "${archive}"
 
+dashboard_archive="slurm-insights-exporter_${version}_grafana_dashboards"
+mkdir -p "${work_dir}/${dashboard_archive}/grafana" "${work_dir}/${dashboard_archive}/prometheus" "${work_dir}/${dashboard_archive}/monitoring"
+cp -R "${project_root}/deploy/grafana/dashboards" "${project_root}/deploy/grafana/provisioning" "${work_dir}/${dashboard_archive}/grafana/"
+install -m0644 "${project_root}/deploy/grafana/README.md" "${work_dir}/${dashboard_archive}/grafana/"
+install -m0644 "${project_root}/deploy/prometheus-rules.yaml" "${work_dir}/${dashboard_archive}/prometheus/"
+install -m0644 "${project_root}/deploy/monitoring/prometheus.yml" "${project_root}/deploy/monitoring/docker-compose.yml" "${work_dir}/${dashboard_archive}/monitoring/"
+tar -C "${work_dir}" -czf "${dist_dir}/${dashboard_archive}.tar.gz" "${dashboard_archive}"
+
 install -m0755 "${work_dir}/slurm-insights-exporter" "${work_dir}/rpmbuild/SOURCES/"
 install -m0644 "${project_root}/deploy/systemd/slurm-insights-exporter.service" "${work_dir}/rpmbuild/SOURCES/"
 install -m0644 "${project_root}/deploy/systemd/slurm-insights-exporter.sysconfig" "${work_dir}/rpmbuild/SOURCES/"
@@ -38,5 +46,5 @@ for rpm_dist in .el8 .el9; do
 done
 find "${work_dir}/rpmbuild/RPMS" -type f -name '*.rpm' -exec cp {} "${dist_dir}/" \;
 
-(cd "${dist_dir}" && sha256sum "${archive}.tar.gz" slurm-insights-exporter-"${version}"-1.el8.x86_64.rpm slurm-insights-exporter-"${version}"-1.el9.x86_64.rpm > checksums.txt)
+(cd "${dist_dir}" && sha256sum "${archive}.tar.gz" "${dashboard_archive}.tar.gz" slurm-insights-exporter-"${version}"-1.el8.x86_64.rpm slurm-insights-exporter-"${version}"-1.el9.x86_64.rpm > checksums.txt)
 echo "Release artifacts written to ${dist_dir}"

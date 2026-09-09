@@ -83,6 +83,8 @@ GRAFANA_ADMIN_PASSWORD='change-me' \
 
 This starts the exporter, Prometheus with 90-day retention and recording rules, and Grafana with every dashboard preloaded. Production installations should use durable storage, authentication, TLS, and a Prometheus retention policy sized for their cluster.
 
+Each GitHub release includes a standalone `grafana_dashboards` tarball containing the dashboard JSON, Grafana provisioning, Prometheus rules, and turnkey monitoring example. It can be deployed without installing the exporter RPM on the Grafana host.
+
 ## Configuration
 
 | Flag | Environment | Default | Purpose |
