@@ -32,6 +32,19 @@ curl http://localhost:9341/metrics
 curl http://localhost:9341/api/v1/snapshot
 ```
 
+### RPM installation
+
+Download the Linux x86_64 RPM from the GitHub release, then:
+
+```bash
+sudo rpm -Uvh slurm-insights-exporter-0.1.0-1*.x86_64.rpm
+sudo editor /etc/sysconfig/slurm-insights-exporter
+sudo systemctl enable --now slurm-insights-exporter
+systemctl status slurm-insights-exporter
+```
+
+The RPM expects an existing `slurm` service account with permission to run the Slurm CLI and read the desired accounting data. Installation does not start the daemon automatically. Configuration upgrades preserve local changes through RPM's `noreplace` behavior.
+
 Prometheus configuration:
 
 ```yaml

@@ -1,0 +1,15 @@
+# Stable cluster name attached to all exported data.
+SLURM_CLUSTER=production
+
+# Fast controller cache and slower administrative/accounting cache.
+CACHE_TTL=30s
+SLOW_CACHE_TTL=5m
+ACCOUNTING_WINDOW=24h
+SLURM_TIMEOUT=15s
+
+# Append-only audit/history archive managed by systemd StateDirectory.
+HISTORY_DIR=/var/lib/slurm-insights-exporter/history
+HISTORY_INTERVAL=5m
+
+# HTTP bind address.
+LISTEN_ADDRESS=:9341
