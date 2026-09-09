@@ -59,6 +59,30 @@ scrape_configs:
 
 Install `deploy/prometheus-rules.yaml` for utilization, availability, queue depth, throughput, failure-rate, and account-efficiency recording rules and alerts.
 
+## Grafana dashboards
+
+Eight generated and provisionable dashboards with 57 panels are included under `deploy/grafana`:
+
+- Cluster Overview
+- Nodes & Partitions
+- Jobs & Queue
+- Accounting & seff-style Efficiency
+- Fair Share & Account Limits
+- Scheduler & Controller
+- Reservations & Licenses
+- Exporter & Audit Health
+
+All PromQL uses this exporter's actual metric and label schema. Cluster totals deduplicate nodes that belong to multiple partitions. Variables support datasource, cluster, partition, account, QoS, and node selection. See `deploy/grafana/README.md` for provisioning and limitations.
+
+For a turnkey development stack:
+
+```bash
+GRAFANA_ADMIN_PASSWORD='change-me' \
+  docker compose -f deploy/monitoring/docker-compose.yml up -d
+```
+
+This starts the exporter, Prometheus with 90-day retention and recording rules, and Grafana with every dashboard preloaded. Production installations should use durable storage, authentication, TLS, and a Prometheus retention policy sized for their cluster.
+
 ## Configuration
 
 | Flag | Environment | Default | Purpose |

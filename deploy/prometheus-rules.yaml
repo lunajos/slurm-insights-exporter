@@ -3,9 +3,9 @@ groups:
     interval: 30s
     rules:
       - record: cluster:slurm_cpu_utilization:ratio
-        expr: sum by (cluster) (slurm_node_cpu_count{status="allocated"}) / sum by (cluster) (slurm_node_cpu_count{status="total"})
+        expr: sum by (cluster) (max by (cluster, node) (slurm_node_cpu_count{status="allocated"})) / sum by (cluster) (max by (cluster, node) (slurm_node_cpu_count{status="total"}))
       - record: cluster:slurm_node_availability:ratio
-        expr: sum by (cluster) (slurm_node_info{state=~"IDLE|ALLOCATED|MIXED"}) / sum by (cluster) (slurm_node_info)
+        expr: sum by (cluster) (max by (cluster, node) (slurm_node_info{state=~"IDLE|ALLOCATED|MIXED"})) / sum by (cluster) (max by (cluster, node) (slurm_node_info))
       - record: cluster:slurm_pending_jobs:sum
         expr: sum by (cluster) (slurm_queue_jobs{state="PENDING"})
       - record: cluster:slurm_running_jobs:sum

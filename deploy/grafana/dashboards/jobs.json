@@ -1,0 +1,392 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "Generated for slurm-insights-exporter metrics.",
+  "id": null,
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Jobs across all live states.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (state) (slurm_queue_jobs{cluster=~\"$cluster\",partition=~\"$partition\",account=~\"$account\",qos=~\"$qos\"})",
+          "instant": false,
+          "legendFormat": "{{state}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Queue Jobs",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Requested or allocated CPUs.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (state) (slurm_queue_cpus{cluster=~\"$cluster\",partition=~\"$partition\",account=~\"$account\",qos=~\"$qos\"})",
+          "instant": false,
+          "legendFormat": "{{state}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Queue CPUs",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Requested or allocated GPUs.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (state) (slurm_queue_gpus{cluster=~\"$cluster\",partition=~\"$partition\",account=~\"$account\",qos=~\"$qos\"})",
+          "instant": false,
+          "legendFormat": "{{state}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Queue GPUs",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Requested or allocated memory.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (state) (slurm_queue_memory_bytes{cluster=~\"$cluster\",partition=~\"$partition\",account=~\"$account\",qos=~\"$qos\"})",
+          "instant": false,
+          "legendFormat": "{{state}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Queue Memory",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Resource, priority, dependency, and policy pressure.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 8
+      },
+      "id": 5,
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (reason) (slurm_queue_jobs{cluster=~\"$cluster\",partition=~\"$partition\",account=~\"$account\",state=\"PENDING\"})",
+          "instant": false,
+          "legendFormat": "{{reason}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Pending by Reason",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Requires -metrics.per-job.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 8
+      },
+      "id": 6,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "expr": "slurm_job_cpus{cluster=~\"$cluster\",partition=~\"$partition\",account=~\"$account\"}",
+          "instant": true,
+          "legendFormat": "{{job_id}} {{job_name}} {{user}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Running Job CPU",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Requires -metrics.per-job.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 8
+      },
+      "id": 7,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "expr": "slurm_job_gpus{cluster=~\"$cluster\",partition=~\"$partition\",account=~\"$account\"}",
+          "instant": true,
+          "legendFormat": "{{job_id}} {{job_name}} {{user}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Running Job GPU",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Submit-to-start time; requires -metrics.per-job.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 8
+      },
+      "id": 8,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "expr": "slurm_job_wait_seconds{cluster=~\"$cluster\",partition=~\"$partition\",account=~\"$account\"}",
+          "instant": true,
+          "legendFormat": "{{job_id}} {{job_name}} {{user}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Running Job Wait",
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "slurm",
+    "hpc",
+    "slurm-insights-exporter"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": "Prometheus",
+          "value": "prometheus"
+        },
+        "label": "Datasource",
+        "name": "DS_PROMETHEUS",
+        "query": "prometheus",
+        "refresh": 1,
+        "type": "datasource"
+      },
+      {
+        "allValue": ".*",
+        "includeAll": true,
+        "label": "Cluster",
+        "multi": true,
+        "name": "cluster",
+        "query": "label_values(slurm_node_info, cluster)",
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "includeAll": true,
+        "label": "Partition",
+        "multi": true,
+        "name": "partition",
+        "query": "label_values(slurm_node_info{cluster=~\"$cluster\"}, partition)",
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "includeAll": true,
+        "label": "Account",
+        "multi": true,
+        "name": "account",
+        "query": "label_values(slurm_queue_jobs{cluster=~\"$cluster\"}, account)",
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "includeAll": true,
+        "label": "QoS",
+        "multi": true,
+        "name": "qos",
+        "query": "label_values(slurm_queue_jobs{cluster=~\"$cluster\"}, qos)",
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "includeAll": true,
+        "label": "Node",
+        "multi": true,
+        "name": "node",
+        "query": "label_values(slurm_node_info{cluster=~\"$cluster\",partition=~\"$partition\"}, node)",
+        "refresh": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "Slurm / Jobs \u0026 Queue",
+  "uid": "slurm-jobs",
+  "version": 1
+}

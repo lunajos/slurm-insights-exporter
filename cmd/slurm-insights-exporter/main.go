@@ -63,6 +63,23 @@ func main() {
 	mux.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
 		slurm.RenderPrometheus(w, cache.Get(r.Context()))
+		enabled := 0
+		var sequence uint64
+		tracked := 0
+		lastWrite := int64(0)
+		if archive != nil {
+			s := archive.Status()
+			enabled = 1
+			sequence = s.Sequence
+			tracked = s.TrackedJobs
+			if !s.LastWrite.IsZero() {
+				lastWrite = s.LastWrite.Unix()
+			}
+		}
+		_, _ = fmt.Fprintf(w, "# HELP slurm_history_enabled Whether the append-only history archive is enabled.\n# TYPE slurm_history_enabled gauge\nslurm_history_enabled %d\n", enabled)
+		_, _ = fmt.Fprintf(w, "# HELP slurm_history_sequence Latest audit-chain sequence.\n# TYPE slurm_history_sequence gauge\nslurm_history_sequence %d\n", sequence)
+		_, _ = fmt.Fprintf(w, "# HELP slurm_history_tracked_jobs Jobs indexed by the audit archive.\n# TYPE slurm_history_tracked_jobs gauge\nslurm_history_tracked_jobs %d\n", tracked)
+		_, _ = fmt.Fprintf(w, "# HELP slurm_history_last_write_timestamp_seconds Unix timestamp of the latest archive write.\n# TYPE slurm_history_last_write_timestamp_seconds gauge\nslurm_history_last_write_timestamp_seconds %d\n", lastWrite)
 	})
 	mux.HandleFunc("/api/v1/snapshot", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
