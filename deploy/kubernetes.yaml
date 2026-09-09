@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: slurm-insights-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: slurm-insights-exporter}
+  template:
+    metadata:
+      labels: {app: slurm-insights-exporter}
+      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9341"}
+    spec:
+      containers:
+        - name: exporter
+          image: ghcr.io/raging-racoons/slurm-insights-exporter:latest
+          ports: [{name: metrics, containerPort: 9341}]
+          env:
+            - {name: SLURM_CLUSTER, value: production}
+          readinessProbe: {httpGet: {path: /-/healthy, port: metrics}}
+          resources:
+            requests: {cpu: 25m, memory: 32Mi}
+            limits: {cpu: 250m, memory: 256Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: slurm-insights-exporter
+spec:
+  selector: {app: slurm-insights-exporter}
+  ports: [{name: metrics, port: 9341, targetPort: metrics}]

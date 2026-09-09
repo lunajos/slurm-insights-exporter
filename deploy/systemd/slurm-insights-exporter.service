@@ -1,0 +1,17 @@
+[Unit]
+Description=Slurm Insights Prometheus Exporter
+After=network-online.target slurmctld.service slurmdbd.service
+
+[Service]
+User=slurm
+Group=slurm
+EnvironmentFile=-/etc/slurm-insights-exporter.env
+ExecStart=/usr/local/bin/slurm-insights-exporter
+Restart=on-failure
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

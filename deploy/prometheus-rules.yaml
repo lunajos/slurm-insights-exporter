@@ -1,0 +1,30 @@
+groups:
+  - name: slurm-insights
+    interval: 30s
+    rules:
+      - record: cluster:slurm_cpu_utilization:ratio
+        expr: sum by (cluster) (slurm_node_cpu_count{status="allocated"}) / sum by (cluster) (slurm_node_cpu_count{status="total"})
+      - record: cluster:slurm_node_availability:ratio
+        expr: sum by (cluster) (slurm_node_info{state=~"IDLE|ALLOCATED|MIXED"}) / sum by (cluster) (slurm_node_info)
+      - record: cluster:slurm_pending_jobs:sum
+        expr: sum by (cluster) (slurm_queue_jobs{state="PENDING"})
+      - record: cluster:slurm_running_jobs:sum
+        expr: sum by (cluster) (slurm_queue_jobs{state="RUNNING"})
+      - record: cluster:slurm_job_start_rate:5m
+        expr: rate(slurm_controller_jobs_started_total[5m])
+      - record: cluster:slurm_job_failure_ratio:1h
+        expr: increase(slurm_controller_jobs_failed_total[1h]) / clamp_min(increase(slurm_controller_jobs_completed_total[1h]) + increase(slurm_controller_jobs_failed_total[1h]), 1)
+      - record: account:slurm_cpu_efficiency:ratio
+        expr: sum by (cluster, account) (slurm_accounting_cpu_seconds) / clamp_min(sum by (cluster, account) (slurm_accounting_cpu_capacity_seconds), 1)
+      - alert: SlurmExporterCollectionFailed
+        expr: slurm_exporter_up == 0
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: Slurm exporter collection is incomplete
+      - alert: SlurmPendingQueueGrowing
+        expr: deriv(cluster:slurm_pending_jobs:sum[30m]) > 0
+        for: 30m
+        labels: {severity: warning}
+        annotations:
+          summary: Slurm pending queue has grown for 30 minutes

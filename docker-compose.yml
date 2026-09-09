@@ -1,0 +1,10 @@
+services:
+  exporter:
+    build: .
+    ports: ["9341:9341"]
+    environment:
+      SLURM_CLUSTER: ${SLURM_CLUSTER:-production}
+    volumes:
+      - /etc/slurm:/etc/slurm:ro
+      - /var/run/munge:/var/run/munge:ro
+    restart: unless-stopped
