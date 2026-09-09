@@ -27,8 +27,16 @@ install -m0644 "${project_root}/deploy/systemd/slurm-insights-exporter.service" 
 install -m0644 "${project_root}/deploy/systemd/slurm-insights-exporter.sysconfig" "${work_dir}/rpmbuild/SOURCES/"
 install -m0644 "${project_root}/LICENSE" "${work_dir}/rpmbuild/SOURCES/"
 install -m0644 "${project_root}/packaging/rpm/slurm-insights-exporter.spec" "${work_dir}/rpmbuild/SPECS/"
-rpmbuild -bb --define "_topdir ${work_dir}/rpmbuild" --define "_tmppath ${work_dir}" --define "version ${version}" "${work_dir}/rpmbuild/SPECS/slurm-insights-exporter.spec"
+
+for rpm_dist in .el8 .el9; do
+  rpmbuild -bb \
+    --define "_topdir ${work_dir}/rpmbuild" \
+    --define "_tmppath ${work_dir}" \
+    --define "version ${version}" \
+    --define "dist ${rpm_dist}" \
+    "${work_dir}/rpmbuild/SPECS/slurm-insights-exporter.spec"
+done
 find "${work_dir}/rpmbuild/RPMS" -type f -name '*.rpm' -exec cp {} "${dist_dir}/" \;
 
-(cd "${dist_dir}" && sha256sum "${archive}.tar.gz" slurm-insights-exporter-"${version}"-1*.x86_64.rpm > checksums.txt)
+(cd "${dist_dir}" && sha256sum "${archive}.tar.gz" slurm-insights-exporter-"${version}"-1.el8.x86_64.rpm slurm-insights-exporter-"${version}"-1.el9.x86_64.rpm > checksums.txt)
 echo "Release artifacts written to ${dist_dir}"

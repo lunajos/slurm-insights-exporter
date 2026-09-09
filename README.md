@@ -34,7 +34,7 @@ curl http://localhost:9341/api/v1/snapshot
 
 ### RPM installation
 
-Download the Linux x86_64 RPM from the GitHub release, then:
+Download the Linux x86_64 RPM matching EL8-compatible or EL9-compatible systems from the GitHub release, then:
 
 ```bash
 sudo rpm -Uvh slurm-insights-exporter-0.1.0-1*.x86_64.rpm
@@ -44,6 +44,8 @@ systemctl status slurm-insights-exporter
 ```
 
 The RPM expects an existing `slurm` service account with permission to run the Slurm CLI and read the desired accounting data. Installation does not start the daemon automatically. Configuration upgrades preserve local changes through RPM's `noreplace` behavior.
+
+The `.el8` package targets RHEL/Rocky/AlmaLinux 8 and the `.el9` package targets RHEL/Rocky/AlmaLinux 9. Both contain the same statically linked Linux x86_64 Go binary; separate RPMs provide explicit distribution targeting and repository compatibility.
 
 Prometheus configuration:
 
