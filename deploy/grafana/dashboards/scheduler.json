@@ -397,6 +397,26 @@
         "query": "label_values(slurm_node_info{cluster=~\"$cluster\",partition=~\"$partition\"}, node)",
         "refresh": 1,
         "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "includeAll": true,
+        "label": "TRES",
+        "multi": true,
+        "name": "resource",
+        "query": "label_values(slurm_cluster_tres{cluster=~\"$cluster\"}, resource)",
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "includeAll": true,
+        "label": "Node Profile",
+        "multi": true,
+        "name": "profile",
+        "query": "label_values(slurm_node_profile_info{cluster=~\"$cluster\"}, profile)",
+        "refresh": 1,
+        "type": "query"
       }
     ]
   },

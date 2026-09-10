@@ -26,3 +26,10 @@ func TestQuantities(t *testing.T) {
 		t.Fatalf("memory allocation=%v", got)
 	}
 }
+
+func TestTRESNumeric(t *testing.T) {
+	got := tresNumeric("cpu=64,mem=256G,billing=64,gres/gpu:a100=4(IDX:0-3)")
+	if got["cpu"] != 64 || got["mem"] != 256*1024*1024*1024 || got["gres/gpu:a100"] != 4 {
+		t.Fatalf("TRES=%v", got)
+	}
+}

@@ -48,6 +48,10 @@ func dashboards() []dashboardDef {
 			{"Nodes by State", "timeseries", "short", q(`sum by (state) (max by (cluster, node, state) (slurm_node_info{cluster=~"$cluster"}))`, `{{state}}`), "Node state history, deduplicated for multi-partition membership."},
 			{"CPU Disposition", "timeseries", "short", q(`sum by (status) (max by (cluster, node, status) (slurm_node_cpu_count{cluster=~"$cluster"}))`, `{{status}}`), "Allocated, idle, other, and total CPUs, deduplicated by node."},
 			{"Pending Reasons", "bargauge", "short", q(`sum by (reason) (slurm_queue_jobs{cluster=~"$cluster",state="PENDING"})`, `{{reason}}`), "Current pending jobs grouped by Slurm reason."},
+			{"Total CPUs", "stat", "short", q(`sum(slurm_cluster_tres{cluster=~"$cluster",resource="cpu",status="total"})`, `total`), "Configured CPU TRES across the cluster."},
+			{"Available CPUs", "stat", "short", q(`sum(slurm_cluster_tres{cluster=~"$cluster",resource="cpu",status="available"})`, `available`), "Configured CPU TRES minus allocated CPU TRES."},
+			{"Available Memory", "stat", "bytes", q(`sum(slurm_cluster_tres{cluster=~"$cluster",resource="mem",status="available"})`, `available`), "Configured memory TRES minus allocated memory TRES."},
+			{"All Trackable Resources", "table", "short", q(`sum by (resource, status) (slurm_cluster_tres{cluster=~"$cluster",resource=~"$resource"})`, `{{resource}} / {{status}}`), "All CfgTRES and AllocTRES resources. Memory values are bytes; other resources use native Slurm counts."},
 		}},
 		{"capacity.json", "slurm-capacity", "Slurm / Nodes & Partitions", []panelDef{
 			{"Partition CPUs", "timeseries", "short", q(`sum by (partition, status) (slurm_partition_cpus{cluster=~"$cluster",partition=~"$partition"})`, `{{partition}} / {{status}}`), "CPU disposition by partition."},
@@ -57,6 +61,10 @@ func dashboards() []dashboardDef {
 			{"Node Allocated Memory", "timeseries", "bytes", q(`slurm_node_allocated_memory_bytes{cluster=~"$cluster",partition=~"$partition",node=~"$node"}`, `{{node}}`), "Memory assigned by Slurm."},
 			{"Node GPUs", "timeseries", "short", q(`slurm_node_gpus{cluster=~"$cluster",partition=~"$partition",node=~"$node"}`, `{{node}} / {{status}}`), "Total and allocated GPUs."},
 			{"Partition Time Limits", "table", "s", q(`max by (partition) (slurm_partition_time_limit_seconds{cluster=~"$cluster",partition=~"$partition"})`, `{{partition}}`), "Configured partition time limits."},
+			{"Node Status Timeline", "state-timeline", "none", q(`slurm_node_profile_assignment{cluster=~"$cluster",partitions=~".*$partition.*",node=~"$node"}`, `{{node}} / {{state}}`), "Node state and profile assignment over time."},
+			{"Node Profile Membership", "table", "none", q(`slurm_node_profile_assignment{cluster=~"$cluster",profile=~"$profile",node=~"$node"}`, `{{node}} / {{profile}} / {{state}}`), "Expected node shape inferred from normalized Slurm CfgTRES."},
+			{"Profile Population by State", "bargauge", "short", q(`sum by (profile, state) (slurm_node_profile_nodes{cluster=~"$cluster",profile=~"$profile"})`, `{{profile}} / {{state}}`), "Highlights unusual or singleton node profiles and unhealthy states."},
+			{"Expected TRES per Profile", "table", "short", q(`slurm_node_profile_tres{cluster=~"$cluster",profile=~"$profile",resource=~"$resource"}`, `{{profile}} / {{resource}}`), "Expected per-node resources derived from CfgTRES. Memory values are bytes."},
 		}},
 		{"jobs.json", "slurm-jobs", "Slurm / Jobs & Queue", []panelDef{
 			{"Queue Jobs", "timeseries", "short", q(`sum by (state) (slurm_queue_jobs{cluster=~"$cluster",partition=~"$partition",account=~"$account",qos=~"$qos"})`, `{{state}}`), "Jobs across all live states."},
@@ -140,7 +148,7 @@ func options(t string) map[string]any {
 	return map[string]any{"legend": map[string]any{"displayMode": "table", "placement": "bottom"}, "tooltip": map[string]any{"mode": "multi"}}
 }
 func variables() []any {
-	return []any{variable("DS_PROMETHEUS", "Datasource", "datasource", "prometheus", ""), variable("cluster", "Cluster", "query", `label_values(slurm_node_info, cluster)`, ".*"), variable("partition", "Partition", "query", `label_values(slurm_node_info{cluster=~"$cluster"}, partition)`, ".*"), variable("account", "Account", "query", `label_values(slurm_queue_jobs{cluster=~"$cluster"}, account)`, ".*"), variable("qos", "QoS", "query", `label_values(slurm_queue_jobs{cluster=~"$cluster"}, qos)`, ".*"), variable("node", "Node", "query", `label_values(slurm_node_info{cluster=~"$cluster",partition=~"$partition"}, node)`, ".*")}
+	return []any{variable("DS_PROMETHEUS", "Datasource", "datasource", "prometheus", ""), variable("cluster", "Cluster", "query", `label_values(slurm_node_info, cluster)`, ".*"), variable("partition", "Partition", "query", `label_values(slurm_node_info{cluster=~"$cluster"}, partition)`, ".*"), variable("account", "Account", "query", `label_values(slurm_queue_jobs{cluster=~"$cluster"}, account)`, ".*"), variable("qos", "QoS", "query", `label_values(slurm_queue_jobs{cluster=~"$cluster"}, qos)`, ".*"), variable("node", "Node", "query", `label_values(slurm_node_info{cluster=~"$cluster",partition=~"$partition"}, node)`, ".*"), variable("resource", "TRES", "query", `label_values(slurm_cluster_tres{cluster=~"$cluster"}, resource)`, ".*"), variable("profile", "Node Profile", "query", `label_values(slurm_node_profile_info{cluster=~"$cluster"}, profile)`, ".*")}
 }
 func variable(name, label, typ, query, all string) map[string]any {
 	v := map[string]any{"name": name, "label": label, "type": typ, "query": query, "refresh": 1}

@@ -61,7 +61,7 @@ Install `deploy/prometheus-rules.yaml` for utilization, availability, queue dept
 
 ## Grafana dashboards
 
-Eight generated and provisionable dashboards with 57 panels are included under `deploy/grafana`:
+Eight generated and provisionable dashboards with 65 panels are included under `deploy/grafana`:
 
 - Cluster Overview
 - Nodes & Partitions
@@ -72,7 +72,7 @@ Eight generated and provisionable dashboards with 57 panels are included under `
 - Reservations & Licenses
 - Exporter & Audit Health
 
-All PromQL uses this exporter's actual metric and label schema. Cluster totals deduplicate nodes that belong to multiple partitions. Variables support datasource, cluster, partition, account, QoS, and node selection. See `deploy/grafana/README.md` for provisioning and limitations.
+All PromQL uses this exporter's actual metric and label schema. Cluster totals deduplicate nodes that belong to multiple partitions. Variables support datasource, cluster, partition, account, QoS, node, arbitrary TRES, and inferred node-profile selection. See `deploy/grafana/README.md` for provisioning and limitations.
 
 For a turnkey development stack:
 

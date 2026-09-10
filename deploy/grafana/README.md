@@ -11,7 +11,9 @@ Eight provisionable dashboards cover the complete Prometheus surface of Slurm In
 7. Reservations & Licenses
 8. Exporter & Audit Health
 
-They require Grafana 10+ and a Prometheus datasource. Provisioning assigns the datasource UID `prometheus`; every dashboard also exposes a datasource selector. Cluster, partition, account, QoS, and node variables support multi-selection.
+They require Grafana 10+ and a Prometheus datasource. Provisioning assigns the datasource UID `prometheus`; every dashboard also exposes a datasource selector. Cluster, partition, account, QoS, node, TRES, and inferred node-profile variables support multi-selection.
+
+Node profiles are derived from normalized `CfgTRES` reported by `scontrol show nodes`. Each distinct expected node shape receives a stable profile ID, per-profile TRES values, node membership, and state counts. This makes hardware pools visible and exposes configuration outliers without requiring a manually maintained profile file.
 
 Run the complete local stack from the repository root:
 

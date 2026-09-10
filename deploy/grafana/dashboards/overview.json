@@ -325,6 +325,160 @@
       ],
       "title": "Pending Reasons",
       "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Configured CPU TRES across the cluster.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 16
+      },
+      "id": 9,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(slurm_cluster_tres{cluster=~\"$cluster\",resource=\"cpu\",status=\"total\"})",
+          "instant": false,
+          "legendFormat": "total",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Total CPUs",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Configured CPU TRES minus allocated CPU TRES.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 16
+      },
+      "id": 10,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(slurm_cluster_tres{cluster=~\"$cluster\",resource=\"cpu\",status=\"available\"})",
+          "instant": false,
+          "legendFormat": "available",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Available CPUs",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Configured memory TRES minus allocated memory TRES.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 16
+      },
+      "id": 11,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(slurm_cluster_tres{cluster=~\"$cluster\",resource=\"mem\",status=\"available\"})",
+          "instant": false,
+          "legendFormat": "available",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Available Memory",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "All CfgTRES and AllocTRES resources. Memory values are bytes; other resources use native Slurm counts.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 16
+      },
+      "id": 12,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "expr": "sum by (resource, status) (slurm_cluster_tres{cluster=~\"$cluster\",resource=~\"$resource\"})",
+          "instant": true,
+          "legendFormat": "{{resource}} / {{status}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "All Trackable Resources",
+      "type": "table"
     }
   ],
   "refresh": "30s",
@@ -394,6 +548,26 @@
         "multi": true,
         "name": "node",
         "query": "label_values(slurm_node_info{cluster=~\"$cluster\",partition=~\"$partition\"}, node)",
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "includeAll": true,
+        "label": "TRES",
+        "multi": true,
+        "name": "resource",
+        "query": "label_values(slurm_cluster_tres{cluster=~\"$cluster\"}, resource)",
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "includeAll": true,
+        "label": "Node Profile",
+        "multi": true,
+        "name": "profile",
+        "query": "label_values(slurm_node_profile_info{cluster=~\"$cluster\"}, profile)",
         "refresh": 1,
         "type": "query"
       }

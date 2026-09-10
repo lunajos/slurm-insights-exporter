@@ -2,6 +2,7 @@ package slurm
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"regexp"
 	"sort"
@@ -70,7 +71,7 @@ func (c *Collector) Collect(ctx context.Context) Snapshot {
 		name string
 		fn   func(context.Context) ([]Sample, []JobRecord, error)
 	}
-	collectors := []namedCollector{{"nodes", c.nodes}, {"partitions", c.partitions}, {"queue", c.queue}, {"reservations", c.slow("reservations", c.reservations)}, {"accounting", c.slow("accounting", c.accounting)}, {"fairshare", c.slow("fairshare", c.fairshare)}, {"scheduler", c.slow("scheduler", c.diagnostics)}, {"licenses", c.slow("licenses", c.licenses)}, {"account_limits", c.slow("account_limits", c.accountLimits)}}
+	collectors := []namedCollector{{"nodes", c.nodes}, {"partitions", c.partitions}, {"queue", c.queue}, {"tres_profiles", c.slow("tres_profiles", c.tresProfiles)}, {"reservations", c.slow("reservations", c.reservations)}, {"accounting", c.slow("accounting", c.accounting)}, {"fairshare", c.slow("fairshare", c.fairshare)}, {"scheduler", c.slow("scheduler", c.diagnostics)}, {"licenses", c.slow("licenses", c.licenses)}, {"account_limits", c.slow("account_limits", c.accountLimits)}}
 	ch := make(chan result, len(collectors))
 	var wg sync.WaitGroup
 	for _, item := range collectors {
@@ -180,6 +181,78 @@ func (c *Collector) nodes(ctx context.Context) ([]Sample, []JobRecord, error) {
 		}
 		if len(r) >= 11 {
 			out = append(out, sample("node_allocated_memory_bytes", "Allocated memory", "gauge", number(r[10])*1024*1024, l))
+		}
+	}
+	return out, nil, nil
+}
+
+func (c *Collector) tresProfiles(ctx context.Context) ([]Sample, []JobRecord, error) {
+	b, e := c.run(ctx, "scontrol", "show", "nodes", "--oneliner")
+	if e != nil {
+		return nil, nil, e
+	}
+	type totals struct{ configured, allocated float64 }
+	clusterTotals := map[string]*totals{}
+	profileCounts := map[string]float64{}
+	profileConfig := map[string]string{}
+	profileTRES := map[string]map[string]float64{}
+	var out []Sample
+	for _, line := range strings.Split(strings.TrimSpace(string(b)), "\n") {
+		kv := keyValues(line)
+		node := clean(kv["NodeName"])
+		if node == "" {
+			continue
+		}
+		cfg := tresNumeric(kv["CfgTRES"])
+		alloc := tresNumeric(kv["AllocTRES"])
+		normalized := normalizedTRES(cfg)
+		sum := sha256.Sum256([]byte(normalized))
+		profile := fmt.Sprintf("profile-%x", sum[:6])
+		state := baseState(kv["State"])
+		partitions := clean(kv["Partitions"])
+		profileConfig[profile] = normalized
+		profileTRES[profile] = cfg
+		profileCounts[strings.Join([]string{profile, state}, "\x00")]++
+		out = append(out, sample("node_profile_assignment", "Configured hardware profile assigned to a node", "gauge", 1, map[string]string{"cluster": c.cfg.Cluster, "node": node, "profile": profile, "state": state, "partitions": partitions}))
+		keys := map[string]bool{}
+		for k := range cfg {
+			keys[k] = true
+		}
+		for k := range alloc {
+			keys[k] = true
+		}
+		for resource := range keys {
+			total := cfg[resource]
+			used := alloc[resource]
+			available := total - used
+			if available < 0 {
+				available = 0
+			}
+			l := map[string]string{"cluster": c.cfg.Cluster, "node": node, "resource": resource}
+			out = append(out, sample("node_tres", "Per-node trackable resources by disposition", "gauge", total, merge(l, map[string]string{"status": "total"})), sample("node_tres", "Per-node trackable resources by disposition", "gauge", used, merge(l, map[string]string{"status": "allocated"})), sample("node_tres", "Per-node trackable resources by disposition", "gauge", available, merge(l, map[string]string{"status": "available"})))
+			if clusterTotals[resource] == nil {
+				clusterTotals[resource] = &totals{}
+			}
+			clusterTotals[resource].configured += total
+			clusterTotals[resource].allocated += used
+		}
+	}
+	for resource, t := range clusterTotals {
+		available := t.configured - t.allocated
+		if available < 0 {
+			available = 0
+		}
+		l := map[string]string{"cluster": c.cfg.Cluster, "resource": resource}
+		out = append(out, sample("cluster_tres", "Cluster trackable resources by disposition; memory is bytes", "gauge", t.configured, merge(l, map[string]string{"status": "total"})), sample("cluster_tres", "Cluster trackable resources by disposition; memory is bytes", "gauge", t.allocated, merge(l, map[string]string{"status": "allocated"})), sample("cluster_tres", "Cluster trackable resources by disposition; memory is bytes", "gauge", available, merge(l, map[string]string{"status": "available"})))
+	}
+	for key, count := range profileCounts {
+		p := strings.Split(key, "\x00")
+		out = append(out, sample("node_profile_nodes", "Nodes by inferred configured hardware profile and state", "gauge", count, map[string]string{"cluster": c.cfg.Cluster, "profile": p[0], "state": p[1]}))
+	}
+	for profile, cfg := range profileTRES {
+		out = append(out, sample("node_profile_info", "Inferred profile and normalized CfgTRES definition", "gauge", 1, map[string]string{"cluster": c.cfg.Cluster, "profile": profile, "configuration": profileConfig[profile]}))
+		for resource, value := range cfg {
+			out = append(out, sample("node_profile_tres", "Expected per-node TRES for an inferred hardware profile; memory is bytes", "gauge", value, map[string]string{"cluster": c.cfg.Cluster, "profile": profile, "resource": resource}))
 		}
 	}
 	return out, nil, nil
@@ -435,6 +508,40 @@ func tresValues(s string) map[string]string {
 		}
 	}
 	return m
+}
+
+func tresNumeric(s string) map[string]float64 {
+	out := map[string]float64{}
+	for k, v := range tresValues(s) {
+		if p := strings.IndexByte(v, '('); p >= 0 {
+			v = v[:p]
+		}
+		if k == "mem" {
+			out[k] = parseBytes(v)
+		} else {
+			out[k] = leadingNumber(v)
+		}
+	}
+	return out
+}
+
+var leadingNumberRE = regexp.MustCompile(`^[0-9.]+`)
+
+func leadingNumber(s string) float64 {
+	m := leadingNumberRE.FindString(strings.TrimSpace(s))
+	return number(m)
+}
+func normalizedTRES(m map[string]float64) string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	parts := make([]string, 0, len(keys))
+	for _, k := range keys {
+		parts = append(parts, fmt.Sprintf("%s=%g", k, m[k]))
+	}
+	return strings.Join(parts, ",")
 }
 
 func merge(a, b map[string]string) map[string]string {

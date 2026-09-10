@@ -66,3 +66,35 @@ func TestSeffStyleJobEfficiency(t *testing.T) {
 		t.Fatalf("wait=%v", j.WaitSeconds)
 	}
 }
+
+func TestTRESProfiles(t *testing.T) {
+	r := fakeRunner{"scontrol": "NodeName=n01 State=IDLE Partitions=cpu CfgTRES=cpu=64,mem=256G,billing=64,gres/gpu:a100=4 AllocTRES=cpu=8,mem=32G,gres/gpu:a100=1\nNodeName=n02 State=ALLOCATED Partitions=cpu CfgTRES=cpu=64,mem=256G,billing=64,gres/gpu:a100=4 AllocTRES=cpu=64,mem=128G,gres/gpu:a100=4\n"}
+	c := NewCollector(r, Config{Cluster: "alpha", Timeout: time.Second, AccountingWindow: time.Hour, SlowRefresh: time.Minute})
+	samples, _, err := c.tresProfiles(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var total, allocated, available float64
+	profiles := map[string]bool{}
+	for _, s := range samples {
+		if s.Name == "slurm_cluster_tres" && s.Labels["resource"] == "cpu" {
+			switch s.Labels["status"] {
+			case "total":
+				total = s.Value
+			case "allocated":
+				allocated = s.Value
+			case "available":
+				available = s.Value
+			}
+		}
+		if s.Name == "slurm_node_profile_info" {
+			profiles[s.Labels["profile"]] = true
+		}
+	}
+	if total != 128 || allocated != 72 || available != 56 {
+		t.Fatalf("cpu totals=%v/%v/%v", total, allocated, available)
+	}
+	if len(profiles) != 1 {
+		t.Fatalf("profiles=%v", profiles)
+	}
+}

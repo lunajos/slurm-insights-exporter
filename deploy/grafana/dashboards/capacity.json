@@ -278,6 +278,155 @@
       ],
       "title": "Partition Time Limits",
       "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Node state and profile assignment over time.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 8
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "expr": "slurm_node_profile_assignment{cluster=~\"$cluster\",partitions=~\".*$partition.*\",node=~\"$node\"}",
+          "instant": false,
+          "legendFormat": "{{node}} / {{state}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Node Status Timeline",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Expected node shape inferred from normalized Slurm CfgTRES.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 16
+      },
+      "id": 9,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "expr": "slurm_node_profile_assignment{cluster=~\"$cluster\",profile=~\"$profile\",node=~\"$node\"}",
+          "instant": true,
+          "legendFormat": "{{node}} / {{profile}} / {{state}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Node Profile Membership",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Highlights unusual or singleton node profiles and unhealthy states.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 16
+      },
+      "id": 10,
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (profile, state) (slurm_node_profile_nodes{cluster=~\"$cluster\",profile=~\"$profile\"})",
+          "instant": false,
+          "legendFormat": "{{profile}} / {{state}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Profile Population by State",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Expected per-node resources derived from CfgTRES. Memory values are bytes.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 16
+      },
+      "id": 11,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "expr": "slurm_node_profile_tres{cluster=~\"$cluster\",profile=~\"$profile\",resource=~\"$resource\"}",
+          "instant": true,
+          "legendFormat": "{{profile}} / {{resource}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Expected TRES per Profile",
+      "type": "table"
     }
   ],
   "refresh": "30s",
@@ -347,6 +496,26 @@
         "multi": true,
         "name": "node",
         "query": "label_values(slurm_node_info{cluster=~\"$cluster\",partition=~\"$partition\"}, node)",
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "includeAll": true,
+        "label": "TRES",
+        "multi": true,
+        "name": "resource",
+        "query": "label_values(slurm_cluster_tres{cluster=~\"$cluster\"}, resource)",
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "includeAll": true,
+        "label": "Node Profile",
+        "multi": true,
+        "name": "profile",
+        "query": "label_values(slurm_node_profile_info{cluster=~\"$cluster\"}, profile)",
         "refresh": 1,
         "type": "query"
       }
